@@ -114,30 +114,35 @@ fovCircle.Visible = AimbotSettings.FOVVisible
 fovCircle.Filled = AimbotSettings.FOVFilled
 
 -- ═══════════════════════════════════════════════
--- AUTO-CLICK
+-- AUTO-CLICK (FIXED)
 -- ═══════════════════════════════════════════════
 
 local function UpdateAutoClick()
-    if ACToggle and ACSettings.Enabled then
+    if ACSettings.Enabled and (ACSettings.Hotkey == '' or ACToggle) then
+        local shouldClick = false
         if Mouse.Target then
             local character = Mouse.Target.Parent
             if character and character:FindFirstChild('Humanoid') then
                 local player = Players:GetPlayerFromCharacter(character)
                 if player and player.Team ~= LocalPlayer.Team then
-                    if ACSettings.HoldClick then
-                        if not ACCurrentlyPressed then
-                            ACCurrentlyPressed = true
-                            mouse1press()
-                        end
-                    else
-                        mouse1click()
-                    end
-                else
-                    if ACSettings.HoldClick then
-                        ACCurrentlyPressed = false
-                        mouse1release()
-                    end
+                    shouldClick = true
                 end
+            end
+        end
+        
+        if shouldClick then
+            if ACSettings.HoldClick then
+                if not ACCurrentlyPressed then
+                    ACCurrentlyPressed = true
+                    mouse1press()
+                end
+            else
+                mouse1click()
+            end
+        else
+            if ACSettings.HoldClick and ACCurrentlyPressed then
+                ACCurrentlyPressed = false
+                mouse1release()
             end
         end
     elseif ACCurrentlyPressed then
@@ -695,7 +700,7 @@ do
     local tglHold = MainSection:AddToggle("ACHoldClick", { Title = "Hold Click (hold mouse1)", Default = true })
     tglHold:OnChanged(function() ACSettings.HoldClick = tglHold.Value end)
     local tbHotkey = MainSection:AddInput("ACHotkey", { Title = "Hotkey (leave blank for always on)", Default = "t", Placeholder = "t" })
-    tbHotkey:OnChanged(function(v) ACSettings.Hotkey = v end)
+    tbHotkey:OnChanged(function(v) ACSettings.Hotkey = v; ACToggle = (v ~= '') end)
     local tglToggle = MainSection:AddToggle("ACToggleMode", { Title = "Toggle on press", Default = true })
     tglToggle:OnChanged(function() ACSettings.HotkeyToggle = tglToggle.Value end)
 end
